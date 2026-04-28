@@ -1,98 +1,157 @@
-import express from 'express';
-import Product from '../models/producto.js';
-import multer from 'multer';
+import express from "express";
+import Product from "../models/producto.js";
+import multer from "multer";
 
 const router = express.Router();
 
-// Configurar multer para almacenar archivos en memoria
+// 🔹 MULTER CONFIG
 const storage = multer.memoryStorage();
-const upload = multer({ 
+
+const upload = multer({
   storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB límite
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
   fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) {
+    if (file.mimetype.startsWith("image/")) {
       cb(null, true);
     } else {
-      cb(new Error('Solo se aceptan imágenes'), false);
+      cb(new Error("Solo se aceptan imágenes"), false);
     }
-  }
+  },
 });
 
-router.post('/', upload.single('image'), async (req, res) => {
+// ================= CREATE =================
+router.post("/", async (req, res) => {
   try {
-    const { title, artist, genre, format, year, price, stock, description, isSecondHand } = req.body;
-    const newProduct = new Product({ 
-      title, 
-      artist, 
-      genre, 
-      format, 
-      year, 
-      price, 
-      stock, 
-      description, 
-      isSecondHand,
-      image: req.file ? req.file.buffer : null,
-      imageContentType: req.file ? req.file.mimetype : null
+    const {
+    title,
+    artist,
+    genre,
+    format,
+    year,
+    price,
+    stock,
+    description,
+    isSecondHand,
+    images,
+    condition, // ✅ AÑADE ESTO
+    } = req.body;
+
+    const newProduct = new Product({
+      title,
+      artist,
+      genre,
+      format,
+      year: year ? Number(year) : undefined,
+      price: Number(price),
+      stock: Number(stock),
+      description,
+      isSecondHand: isSecondHand === true || isSecondHand === "true",
+      condition,
+      // 🔥 aquí está el fix
+      imageUrl: images?.[0] || null,
     });
+
     await newProduct.save();
+
     res.status(201).json(newProduct);
   } catch (error) {
-    res.status(500).json({ message: 'Error al crear el producto' });
+    console.error("ERROR CREATE:", error);
+    res.status(500).json({ message: "Error al crear producto" });
   }
 });
-
-router.get('/', async (req, res) => {
+// ================= GET ALL =================
+router.get("/", async (req, res) => {
   try {
-    const products = await Product.find().select('-image');
+    const products = await Product.find().select("-image");
     res.json(products);
   } catch (error) {
-    res.status(500).json({ message: 'Error al obtener productos' });
+    console.error(error);
+    res.status(500).json({ message: "Error al obtener productos" });
   }
 });
 
-router.get('/:id', async (req, res) => {
+// ================= GET BY ID =================
+router.get("/:id", async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
-    if (!product) return res.status(404).json({ message: 'Producto no encontrado' });
+    if (!product) {
+      return res.status(404).json({ message: "Producto no encontrado" });
+    }
     res.json(product);
   } catch (error) {
-    res.status(500).json({ message: 'Error al obtener el producto' });
+    console.error(error);
+    res.status(500).json({ message: "Error al obtener el producto" });
   }
 });
 
-router.get('/:id/image', async (req, res) => {
+// ================= GET IMAGE =================
+router.get("/:id/image", async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
-    if (!product || !product.image) return res.status(404).json({ message: 'Imagen no encontrada' });
-    res.set('Content-Type', product.imageContentType || 'image/jpeg');
+
+    if (!product || !product.image) {
+      return res.status(404).json({ message: "Imagen no encontrada" });
+    }
+
+    res.set("Content-Type", product.imageContentType || "image/jpeg");
     res.send(product.image);
   } catch (error) {
-    res.status(500).json({ message: 'Error al obtener la imagen' });
+    console.error(error);
+    res.status(500).json({ message: "Error al obtener la imagen" });
   }
 });
 
-router.put('/:id', upload.single('image'), async (req, res) => {
+// ================= UPDATE =================
+router.put("/:id", upload.single("image"), async (req, res) => {
   try {
     const updates = { ...req.body };
+
+    // 🔥 Convertir tipos
+    if (updates.year) updates.year = Number(updates.year);
+    if (updates.price) updates.price = Number(updates.price);
+    if (updates.stock) updates.stock = Number(updates.stock);
+
+    if (updates.isSecondHand !== undefined) {
+      updates.isSecondHand =
+        updates.isSecondHand === "true" || updates.isSecondHand === true;
+    }
+
+    // 🔥 Imagen opcional
     if (req.file) {
       updates.image = req.file.buffer;
       updates.imageContentType = req.file.mimetype;
     }
-    const updatedProduct = await Product.findByIdAndUpdate(req.params.id, updates, { new: true });
-    if (!updatedProduct) return res.status(404).json({ message: 'Producto no encontrado' });
+
+    const updatedProduct = await Product.findByIdAndUpdate(
+      req.params.id,
+      updates,
+      { new: true }
+    );
+
+    if (!updatedProduct) {
+      return res.status(404).json({ message: "Producto no encontrado" });
+    }
+
     res.json(updatedProduct);
   } catch (error) {
-    res.status(500).json({ message: 'Error al actualizar el producto' });
+    console.error("ERROR UPDATE PRODUCT:", error);
+    res.status(500).json({ message: "Error al actualizar el producto" });
   }
 });
 
-router.delete('/:id', async (req, res) => {
+// ================= DELETE =================
+router.delete("/:id", async (req, res) => {
   try {
     const deletedProduct = await Product.findByIdAndDelete(req.params.id);
-    if (!deletedProduct) return res.status(404).json({ message: 'Producto no encontrado' });
+
+    if (!deletedProduct) {
+      return res.status(404).json({ message: "Producto no encontrado" });
+    }
+
     res.json(deletedProduct);
   } catch (error) {
-    res.status(500).json({ message: 'Error al eliminar el producto' });
+    console.error(error);
+    res.status(500).json({ message: "Error al eliminar el producto" });
   }
 });
 

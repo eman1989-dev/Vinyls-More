@@ -24,6 +24,25 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+router.get("/", async (req, res) => {
+  const list = await SecondHand.find();
+  res.json(list);
+});
+
+router.get("/seller/:id", async (req, res) => {
+  const list = await SecondHand.find({ sellerId: req.params.id });
+  res.json(list);
+});
+
+router.put("/:id/approve", async (req, res) => {
+  const updated = await SecondHand.findByIdAndUpdate(
+    req.params.id,
+    { approved: true },
+    { new: true }
+  );
+  res.json(updated);
+});
+
 router.put('/:id', async (req, res) => {
   try {
     const updatedSecondHand = await SecondHand.findByIdAndUpdate(req.params.id, req.body, { new: true });

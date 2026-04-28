@@ -7,6 +7,7 @@ import orden from "./routes/ordenRoute.js";
 import review from "./routes/reviewRoute.js";
 import segunda from "./routes/segundaRoute.js";
 import user from "./routes/usuarioRoute.js";
+import product from "./routes/productoRoute.js";
 
 dotenv.config();
 
@@ -30,6 +31,7 @@ app.use("/api/orden", orden);
 app.use("/api/review", review);
 app.use("/api/segunda", segunda);
 app.use("/api/user", user);
+app.use("/api/product", product);
 
 
 // Puerto

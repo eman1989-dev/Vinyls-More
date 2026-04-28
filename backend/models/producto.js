@@ -34,11 +34,7 @@ const productSchema = new mongoose.Schema(
       default: 1
     },
     description: String,
-    image: {
-      type: Buffer,
-      default: null
-    },
-    imageContentType: {
+    imageUrl: {
       type: String,
       default: null
     },
