@@ -34,6 +34,14 @@ const productSchema = new mongoose.Schema(
       default: 1
     },
     description: String,
+    image: {
+      type: Buffer,
+      default: null
+    },
+    imageContentType: {
+      type: String,
+      default: null
+    },
     images: [String],
     sellerId: {
       type: mongoose.Schema.Types.ObjectId,

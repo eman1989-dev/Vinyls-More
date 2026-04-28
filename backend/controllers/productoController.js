@@ -5,7 +5,7 @@ dotenv.config();
 
 exports.getProductos = async (req, res) => {
     try{
-        const productos = await Product.find();
+        const productos = await Product.find().select('-image');
         res.json(productos);
     }catch(err){
         res.status(500).json({message: "Error en el servidor"});
@@ -22,10 +22,33 @@ exports.getProductoId = async (req, res) => {
     }
 };
 
+exports.getProductoImagen = async (req, res) => {
+    try{
+        const producto = await Product.findById(req.params.id);
+        if(!producto || !producto.image) return res.status(404).json({error: 'Imagen no encontrada'});
+        res.set('Content-Type', producto.imageContentType || 'image/jpeg');
+        res.send(producto.image);
+    }catch(error){
+        res.status(500).json({error: 'Error al obtener la imagen'});
+    }
+};
+
 exports.createProducto = async (req, res) => {
     try{
         const {title,artist,genre,format,year,price,stock,description,isSecondHand} = req.body;
-        const nuevoProducto = new Product({title,artist,genre,format,year,price,stock,description,isSecondHand});
+        const nuevoProducto = new Product({
+            title,
+            artist,
+            genre,
+            format,
+            year,
+            price,
+            stock,
+            description,
+            isSecondHand,
+            image: req.file ? req.file.buffer : null,
+            imageContentType: req.file ? req.file.mimetype : null
+        });
         await nuevoProducto.save();
         res.status(201).json(nuevoProducto);
     }catch(err){
@@ -36,7 +59,12 @@ exports.createProducto = async (req, res) => {
 
 exports.updateProducto = async(req,res) => {
     try{
-        const productoActualizado = await Product.findByIdAndUpdate(req.params.id,req.body,{new: true});
+        const updates = { ...req.body };
+        if(req.file){
+            updates.image = req.file.buffer;
+            updates.imageContentType = req.file.mimetype;
+        }
+        const productoActualizado = await Product.findByIdAndUpdate(req.params.id, updates, {new: true});
         if(!productoActualizado){
             return res.status(404).json({error: 'Producto no encontrado'});
         }

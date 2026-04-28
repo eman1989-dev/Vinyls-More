@@ -1,12 +1,39 @@
 import express from 'express';
 import Product from '../models/producto.js';
+import multer from 'multer';
 
 const router = express.Router();
 
-router.post('/', async (req, res) => {
+// Configurar multer para almacenar archivos en memoria
+const storage = multer.memoryStorage();
+const upload = multer({ 
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB límite
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Solo se aceptan imágenes'), false);
+    }
+  }
+});
+
+router.post('/', upload.single('image'), async (req, res) => {
   try {
     const { title, artist, genre, format, year, price, stock, description, isSecondHand } = req.body;
-    const newProduct = new Product({ title, artist, genre, format, year, price, stock, description, isSecondHand });
+    const newProduct = new Product({ 
+      title, 
+      artist, 
+      genre, 
+      format, 
+      year, 
+      price, 
+      stock, 
+      description, 
+      isSecondHand,
+      image: req.file ? req.file.buffer : null,
+      imageContentType: req.file ? req.file.mimetype : null
+    });
     await newProduct.save();
     res.status(201).json(newProduct);
   } catch (error) {
@@ -16,7 +43,7 @@ router.post('/', async (req, res) => {
 
 router.get('/', async (req, res) => {
   try {
-    const products = await Product.find();
+    const products = await Product.find().select('-image');
     res.json(products);
   } catch (error) {
     res.status(500).json({ message: 'Error al obtener productos' });
@@ -33,9 +60,25 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-router.put('/:id', async (req, res) => {
+router.get('/:id/image', async (req, res) => {
   try {
-    const updatedProduct = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const product = await Product.findById(req.params.id);
+    if (!product || !product.image) return res.status(404).json({ message: 'Imagen no encontrada' });
+    res.set('Content-Type', product.imageContentType || 'image/jpeg');
+    res.send(product.image);
+  } catch (error) {
+    res.status(500).json({ message: 'Error al obtener la imagen' });
+  }
+});
+
+router.put('/:id', upload.single('image'), async (req, res) => {
+  try {
+    const updates = { ...req.body };
+    if (req.file) {
+      updates.image = req.file.buffer;
+      updates.imageContentType = req.file.mimetype;
+    }
+    const updatedProduct = await Product.findByIdAndUpdate(req.params.id, updates, { new: true });
     if (!updatedProduct) return res.status(404).json({ message: 'Producto no encontrado' });
     res.json(updatedProduct);
   } catch (error) {
