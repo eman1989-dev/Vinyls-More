@@ -3,11 +3,11 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-function generarToken(usuario) {
+export function generarToken(usuario) {
     return jwt.sign({id: usuario._id, email: usuario.email}, process.env.JWT_SECRET, {expiresIn: '1h'});
 }
 
-function verificarToken(req, res, next) {
+export function verificarToken(req, res, next) {
     const authHeader = req.headers['authorization'];
     if (!authHeader) return res.status(401).json({message: 'Token no proporcionado'});
 
@@ -22,5 +22,3 @@ function verificarToken(req, res, next) {
         return res.status(401).json({message: 'Token no válido'});
     }
 }
-
-module.exports = {verificarToken, generarToken};

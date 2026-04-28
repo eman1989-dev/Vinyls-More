@@ -4,6 +4,27 @@ import bcrypt from 'bcryptjs';
 import User from '../models/Usuario.js';
 import {verificarToken, generarToken} from '../security/auth.js';
 
+router.post('/login', async (req, res) => {
+    try {
+        const { email, password } = req.body;
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(404).json({ message: 'Usuario no encontrado' });
+        }
+
+        const passwordMatch = await bcrypt.compare(password, user.password);
+        if (!passwordMatch) {
+            return res.status(401).json({ message: 'Contraseña incorrecta' });
+        }
+
+        const token = generarToken(user);
+        res.json({ token, user: { id: user._id, name: user.name, email: user.email, role: user.role } });
+    } catch (error) {
+        res.status(500).json({ message: 'Error al iniciar sesión' });
+    }
+});
+
+
 router.post('/', async (req, res) => {
     try {
         const { name, email, password, role, address, phone } = req.body;
@@ -77,29 +98,10 @@ router.delete('/:id', async (req, res) => {
     }
 });
 
-router.post('/login', async (req, res) => {
-    try {
-        const { email, password } = req.body;
-        const user = await User.findOne({ email });
-        if (!user) {
-            return res.status(404).json({ message: 'Usuario no encontrado' });
-        }
-
-        const passwordMatch = await bcrypt.compare(password, user.password);
-        if (!passwordMatch) {
-            return res.status(401).json({ message: 'Contraseña incorrecta' });
-        }
-
-        const token = generarToken(user._id, user.role);
-        res.json({ token, user: { id: user._id, name: user.name, email: user.email, role: user.role } });
-    } catch (error) {
-        res.status(500).json({ message: 'Error al iniciar sesión' });
-    }
-});
 
 router.get('/perfil', verificarToken, async (req, res) => {
     try {
-        const user = await User.findById(req.userId).select('-password');
+        const user = await User.findById(req.usuarioId).select('-password');
         if (!user) {
             return res.status(404).json({ message: 'Usuario no encontrado' });
         }
@@ -109,6 +111,6 @@ router.get('/perfil', verificarToken, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;
 
 

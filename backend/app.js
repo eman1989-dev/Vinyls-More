@@ -2,6 +2,11 @@ import express from "express";
 import connectDB from "./db/db.js";
 import cors from "cors";
 import dotenv from "dotenv";
+import carrito from "./routes/carritoRoute.js";
+import orden from "./routes/ordenRoute.js";
+import review from "./routes/reviewRoute.js";
+import segunda from "./routes/segundaRoute.js";
+import user from "./routes/usuarioRoute.js";
 
 dotenv.config();
 
@@ -18,6 +23,13 @@ app.use(
   })
 );
 app.use(express.json());
+
+//Rutas
+app.use("/api/carrito", carrito);
+app.use("/api/orden", orden);
+app.use("/api/review", review);
+app.use("/api/segunda", segunda);
+app.use("/api/user", user);
 
 
 // Puerto
