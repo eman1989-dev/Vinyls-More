@@ -14,6 +14,15 @@ router.post('/', async (req, res) => {
   }
 });
 
+router.get('/user/:userId', async (req, res) => {
+  try {
+    const orders = await Order.find({ userId: req.params.userId });
+    res.json(orders);
+  } catch (error) {
+    res.status(500).json({ message: 'Error al obtener órdenes del usuario' });
+  }
+});
+
 router.get('/:id', async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);

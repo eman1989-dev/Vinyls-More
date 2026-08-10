@@ -18,7 +18,7 @@ router.post('/login', async (req, res) => {
         }
 
         const token = generarToken(user);
-        res.json({ token, user: { id: user._id, name: user.name, email: user.email, role: user.role } });
+        res.json({ token, user: { _id: user._id, id: user._id, name: user.name, email: user.email, role: user.role } });
     } catch (error) {
         res.status(500).json({ message: 'Error al iniciar sesión' });
     }
@@ -43,7 +43,8 @@ router.post('/', async (req, res) => {
             phone,
         });
         await newUser.save();
-        res.status(201).json({ message: 'Usuario registrado exitosamente', user: { id: newUser._id, name: newUser.name, email: newUser.email, role: newUser.role } });
+        const token = generarToken(newUser);
+        res.status(201).json({ message: 'Usuario registrado exitosamente', token, user: { _id: newUser._id, id: newUser._id, name: newUser.name, email: newUser.email, role: newUser.role } });
     } catch (error) {
         res.status(500).json({ message: 'Error al registrar el usuario' });
     }
