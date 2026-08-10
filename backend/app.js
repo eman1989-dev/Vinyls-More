@@ -21,7 +21,8 @@ connectDB();
 const allowedOrigins = [
     "http://localhost:8080",
     "http://localhost:5173",
-    "https://vinyl-vault-mu.vercel.app"
+    "https://vinyl-vault-mu.vercel.app",
+    "https://vinyl-vault-f40otdt99-eman1989-devs-projects.vercel.app"
 ];
 
 app.use(cors({
