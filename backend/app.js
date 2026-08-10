@@ -17,12 +17,23 @@ const app = express();
 connectDB();
 
 // Middlewares
-app.use(
-  cors({
-    origin: "http://localhost:8080",
-    credentials: true,
-  })
-);
+
+const allowedOrigins = [
+    "http://localhost:8080",
+    "http://localhost:5173",
+    "https://vinyl-vault-mu.vercel.app"
+];
+
+app.use(cors({
+    origin: function (origin, callback) {
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error("No permitido por CORS"));
+        }
+    },
+    credentials: true
+}));
 app.use(express.json());
 
 //Rutas
