@@ -1,7 +1,7 @@
 import express from 'express';
 const router = express.Router();
 import bcrypt from 'bcryptjs';
-import User from '../models/Usuario.js';
+import User from '../models/usuario.js';
 import {verificarToken, generarToken} from '../security/auth.js';
 
 router.post('/login', async (req, res) => {
